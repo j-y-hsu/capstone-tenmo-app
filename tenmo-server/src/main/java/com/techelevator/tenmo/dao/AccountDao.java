@@ -8,6 +8,10 @@ public interface AccountDao {
 
      double findBalanceByUserIdAndAccountId(int userId, int accountId);
 
+     double withdraw(int userId, double amount);
+
+     double findBalanceByUserId(int userId);
+
 
 
 

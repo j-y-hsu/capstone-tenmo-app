@@ -63,5 +63,57 @@ public class JdbcAccountDao implements AccountDao {
 
     }
 
+    @Override
+    public double findBalanceByUserId(int userId){
+        //declare what to return
+        Double balance = 0.00;
+
+        //write sql string
+        String sql = "SELECT balance\n" +
+                "FROM account\n" +
+                "WHERE user_id = ?;";
+
+        //send to the database
+        try {
+            balance = jdbcTemplate.queryForObject(sql, Double.class, userId);
+            if (balance != null){
+                return balance;
+            } else {
+                return -1;
+            }
+
+
+        } catch (DataAccessException e){
+            throw new DaoException("Something went wrong");
+        }
+
+
+
+    }
+
+    @Override
+    public double withdraw(int userId, double amount){
+        double balance = findBalanceByUserId(userId);
+
+
+
+        if (balance >= amount){
+            balance -= amount;
+            String sql = "UPDATE account\n" +
+                    "SET balance = ?\n" +
+                    "WHERE user_id = ?;";
+            try {
+                jdbcTemplate.update(sql, balance, userId);
+                return balance;
+            }catch (DataAccessException e){
+                throw new DaoException("Something went wrong!");
+            }
+        } else {
+            return -1;
+        }
+
+
+    }
+
 
 }
