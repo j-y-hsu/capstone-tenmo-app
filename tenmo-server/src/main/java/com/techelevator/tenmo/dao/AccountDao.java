@@ -12,6 +12,8 @@ public interface AccountDao {
 
      double findBalanceByUserId(int userId);
 
+     double deposit(int userId, double amount);
+
 
 
 

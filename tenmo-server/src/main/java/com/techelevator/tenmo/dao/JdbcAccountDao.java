@@ -32,7 +32,7 @@ public class JdbcAccountDao implements AccountDao {
     }
 
     @Override
-    public double findBalanceByUserIdAndAccountId(int userId, int accountId){
+    public double findBalanceByUserIdAndAccountId(int userId, int accountId) {
         //declare what to return
         Double balance = 0.00;
 
@@ -48,23 +48,22 @@ public class JdbcAccountDao implements AccountDao {
 //               balance = result.getDouble("balance");
 //           }
             balance = jdbcTemplate.queryForObject(sql, Double.class, userId, accountId);
-           if (balance != null){
-               return balance;
-           } else {
-               return -1;
-           }
+            if (balance != null) {
+                return balance;
+            } else {
+                return -1;
+            }
 
 
-        } catch (DataAccessException e){
+        } catch (DataAccessException e) {
             throw new DaoException("Something went wrong");
         }
-
 
 
     }
 
     @Override
-    public double findBalanceByUserId(int userId){
+    public double findBalanceByUserId(int userId) {
         //declare what to return
         Double balance = 0.00;
 
@@ -76,28 +75,25 @@ public class JdbcAccountDao implements AccountDao {
         //send to the database
         try {
             balance = jdbcTemplate.queryForObject(sql, Double.class, userId);
-            if (balance != null){
+            if (balance != null) {
                 return balance;
             } else {
                 return -1;
             }
 
 
-        } catch (DataAccessException e){
+        } catch (DataAccessException e) {
             throw new DaoException("Something went wrong");
         }
-
 
 
     }
 
     @Override
-    public double withdraw(int userId, double amount){
+    public double withdraw(int userId, double amount) {
         double balance = findBalanceByUserId(userId);
 
-
-
-        if (balance >= amount){
+        if (amount > 0 && balance >= amount) {
             balance -= amount;
             String sql = "UPDATE account\n" +
                     "SET balance = ?\n" +
@@ -105,7 +101,7 @@ public class JdbcAccountDao implements AccountDao {
             try {
                 jdbcTemplate.update(sql, balance, userId);
                 return balance;
-            }catch (DataAccessException e){
+            } catch (DataAccessException e) {
                 throw new DaoException("Something went wrong!");
             }
         } else {
@@ -114,6 +110,25 @@ public class JdbcAccountDao implements AccountDao {
 
 
     }
+
+    @Override
+    public double deposit(int userId, double amount) {
+        double balance = findBalanceByUserId(userId);
+
+        balance += amount;
+        String sql = "UPDATE account\n" +
+                "SET balance = ?\n" +
+                "WHERE user_id = ?;";
+        try {
+            jdbcTemplate.update(sql, balance, userId);
+            return balance;
+        } catch (DataAccessException e) {
+            throw new DaoException("Something went wrong!");
+        }
+
+    }
+
+
 
 
 }

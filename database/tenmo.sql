@@ -37,7 +37,9 @@ CREATE TABLE transfer(
 	transfer_id serial NOT NULL PRIMARY KEY, 
 	status varchar(50) DEFAULT('Approved'),
 	sender_id int NOT NULL REFERENCES tenmo_user (user_id),
-	receiver_id int NOT NULL REFERENCES tenmo_user (user_id)
+	receiver_id int NOT NULL REFERENCES tenmo_user (user_id),
+	amount decimal(13, 2) NOT NULL,
+	CONSTRAINT amount_gt_zero CHECK (amount > 0)
 	
 );
 

@@ -6,6 +6,7 @@ public class Transfer {
     private String status;
     private int senderId;
     private int receiverId;
+    private double amount;
 
     public int getTransferId(){
         return transferId;
@@ -38,6 +39,15 @@ public class Transfer {
     public void setReceiverId(int receiverId){
         this.receiverId = receiverId;
     }
+
+    public double getAmount(){
+        return amount;
+    }
+
+    public void setAmount(double amount){
+        this.amount = amount;
+    }
+
 
 
 }
