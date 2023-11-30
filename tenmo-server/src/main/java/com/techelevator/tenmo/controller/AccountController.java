@@ -37,7 +37,7 @@ public class AccountController {
                     throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found!");
                 }
             } catch (DaoException exception) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
             }
 
         } else {

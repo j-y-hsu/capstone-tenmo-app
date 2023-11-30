@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,7 @@ public class TransferController {
     @Autowired
     private UserDao userDao;
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(path = "/{receiverId}")
     public Transfer makeTransfer(@PathVariable int receiverId, @RequestParam double amount, Principal principal) {
         String username = principal.getName();
@@ -39,6 +41,31 @@ public class TransferController {
                 transfer.setSenderId(userId);
                 transfer.setReceiverId(receiverId);
                 transfer.setStatus("Approved");
+
+                createdTransfer = transferDao.create(transfer);
+
+                if (createdTransfer == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                }
+            } catch (DaoException exception) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+            }
+
+        } else {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+        }
+        return createdTransfer;
+    }
+
+    @PostMapping(path = "")
+    public Transfer makeTransfer(@RequestBody @Valid Transfer transfer, Principal principal) {
+        String username = principal.getName();
+        int userId = userDao.findIdByUsername(username);
+
+        Transfer createdTransfer;
+        if (userId != -1) {
+            try {
+                transfer.setSenderId(userId);
 
                 createdTransfer = transferDao.create(transfer);
 

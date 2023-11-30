@@ -1,11 +1,18 @@
 package com.techelevator.tenmo.model;
 
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+
 public class Transfer {
 
     private int transferId;
+    @NotBlank(message = "Status is required.")
     private String status;
     private int senderId;
+    @Min(value = 1000, message = "Not a valid recipient.")
     private int receiverId;
+    @DecimalMin(value = "0.01", message = "Amount must be greater than zero.")
     private double amount;
 
     public int getTransferId(){

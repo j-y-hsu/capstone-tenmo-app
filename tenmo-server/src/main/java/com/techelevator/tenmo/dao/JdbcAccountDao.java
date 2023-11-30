@@ -34,7 +34,7 @@ public class JdbcAccountDao implements AccountDao {
     @Override
     public double findBalanceByUserIdAndAccountId(int userId, int accountId) {
         //declare what to return
-        Double balance = 0.00;
+        Double balance;
 
         //write sql string
         String sql = "SELECT balance\n" +
@@ -43,10 +43,7 @@ public class JdbcAccountDao implements AccountDao {
 
         //send to the database
         try {
-//           SqlRowSet result = jdbcTemplate.queryForRowSet(sql, userId, accountId);
-//           if (result.next()){
-//               balance = result.getDouble("balance");
-//           }
+
             balance = jdbcTemplate.queryForObject(sql, Double.class, userId, accountId);
             if (balance != null) {
                 return balance;
@@ -93,7 +90,7 @@ public class JdbcAccountDao implements AccountDao {
     public double withdraw(int userId, double amount) {
         double balance = findBalanceByUserId(userId);
 
-        if (amount > 0 && balance >= amount) {
+        if (balance >= amount) {
             balance -= amount;
             String sql = "UPDATE account\n" +
                     "SET balance = ?\n" +
