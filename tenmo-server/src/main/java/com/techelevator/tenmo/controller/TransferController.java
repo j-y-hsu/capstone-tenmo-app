@@ -35,7 +35,7 @@ public class TransferController {
          */
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(path = "")
-    public Transfer sendTransfer(@RequestBody @Valid Transfer transfer, Principal principal) {
+    public Transfer makeTransfer(@RequestBody @Valid Transfer transfer, Principal principal) {
         String username = principal.getName();
         int userId = userDao.findIdByUsername(username);
         Transfer createdTransfer = null;
@@ -62,8 +62,6 @@ public class TransferController {
 
         return createdTransfer;
     }
-
-
 
     @PutMapping(path = "/{transferId}")
     public void completeTransfer(@PathVariable int transferId, @RequestParam String status, Principal principal) {
@@ -93,13 +91,13 @@ public class TransferController {
     }
 
     @GetMapping
-    public List<Transfer> getTransfers(Principal principal) {
+    public List<Transfer> getTransfers(@RequestParam(required = false) boolean pending, Principal principal) {
         String username = principal.getName();
         int userId = userDao.findIdByUsername(username);
         List<Transfer> transferList;
         if (userId != -1) {
             try {
-                transferList = transferDao.findAllByUserId(userId);
+                transferList = pending ? transferDao.findAllPendingByUserId(userId): transferDao.findAllByUserId(userId);
             } catch (DaoException exception) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
             }

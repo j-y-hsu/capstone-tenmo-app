@@ -46,24 +46,45 @@ public class JdbcTransferDao implements TransferDao {
     public List<Transfer> findAllByUserId(int userId) {
         List<Transfer> transferList = new ArrayList<>();
 
-        String sql = "SELECT *\n" +
+        String sql = "SELECT status, receiver_id, sender_id, amount, transfer_id\n" +
                 "FROM transfer\n" +
                 "WHERE sender_id = ? OR receiver_id = ?;";
 
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId, userId);
-
-        while (results.next()) {
-            Transfer transfer = mapRowToTransfer(results);
-            transferList.add(transfer);
+        try {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId, userId);
+            while (results.next()) {
+                Transfer transfer = mapRowToTransfer(results);
+                transferList.add(transfer);
+            }
+        } catch (DataAccessException exception) {
+            throw new DaoException("Something went wrong.");
         }
-
 
         return transferList;
     }
 
+    public List<Transfer> findAllPendingByUserId(int userId) {
+        List<Transfer> transfers = new ArrayList<>();
+
+        String sql = "SELECT status, receiver_id, sender_id, amount, transfer_id\n" +
+                "FROM transfer\n" +
+                "WHERE (sender_id = ? OR receiver_id = ?) AND status = 'Pending';";
+
+        try {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, userId, userId);
+            while (results.next()) {
+                transfers.add(mapRowToTransfer(results));
+            }
+        } catch (DataAccessException exception) {
+            throw new DaoException("Something went wrong.");
+        }
+
+        return transfers;
+    }
+
     @Override
     public Transfer findByTransferId(int transferId) {
-        String sql = "SELECT *\n" +
+        String sql = "SELECT status, receiver_id, sender_id, amount, transfer_id\n" +
                 "FROM transfer\n" +
                 "WHERE transfer_id = ?;";
         try {

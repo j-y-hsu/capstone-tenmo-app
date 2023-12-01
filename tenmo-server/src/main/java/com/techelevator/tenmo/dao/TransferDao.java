@@ -10,6 +10,8 @@ public interface TransferDao {
 
     List<Transfer> findAllByUserId(int userId);
 
+    List<Transfer> findAllPendingByUserId(int userId);
+
     Transfer findByTransferId(int transferId);
 
     Transfer update(Transfer transfer);
