@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.controller;
 
+import com.techelevator.tenmo.dao.AccountDao;
 import com.techelevator.tenmo.dao.TransferDao;
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.exception.DaoException;
@@ -22,54 +23,63 @@ import java.util.List;
 public class TransferController {
     @Autowired
     private TransferDao transferDao;
-
+    @Autowired
+    private AccountDao accountDao;
     @Autowired
     private UserDao userDao;
 
+    /*
+        Make a new record of a transfer but do not allow the exchange of money
+        Make sure the receiverId is not equal to the current userId
+
+         */
     @ResponseStatus(HttpStatus.CREATED)
-    @PostMapping(path = "/{receiverId}")
-    public Transfer makeTransfer(@PathVariable int receiverId, @RequestParam double amount, Principal principal) {
+    @PostMapping(path = "")
+    public Transfer sendTransfer(@RequestBody @Valid Transfer transfer, Principal principal) {
         String username = principal.getName();
         int userId = userDao.findIdByUsername(username);
+        Transfer createdTransfer = null;
 
-        Transfer createdTransfer;
-        if (userId != -1) {
-            try {
-
-                Transfer transfer = new Transfer();
-                transfer.setAmount(amount);
+        try {
+            if (transfer.getSenderId() == 0 && userId != transfer.getReceiverId()) {
                 transfer.setSenderId(userId);
-                transfer.setReceiverId(receiverId);
-                transfer.setStatus("Approved");
-
-                createdTransfer = transferDao.create(transfer);
-
-                if (createdTransfer == null) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                if (exchangeMoney(transfer.getSenderId(), transfer.getReceiverId(), transfer.getAmount())) {
+                    transfer.setStatus("Approved");
+                    createdTransfer = transferDao.create(transfer);
                 }
-            } catch (DaoException exception) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
+            } else if (transfer.getReceiverId() == 0 && userId != transfer.getSenderId()) {
+                transfer.setReceiverId(userId);
+                transfer.setStatus("Pending");
+                createdTransfer = transferDao.create(transfer);
             }
 
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+            if (createdTransfer == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        } catch (DaoException exception) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, exception.getMessage());
         }
+
         return createdTransfer;
     }
 
-    @PostMapping(path = "")
-    public Transfer makeTransfer(@RequestBody @Valid Transfer transfer, Principal principal) {
+
+
+    @PutMapping(path = "/{transferId}")
+    public void completeTransfer(@PathVariable int transferId, @RequestParam String status, Principal principal) {
         String username = principal.getName();
         int userId = userDao.findIdByUsername(username);
 
-        Transfer createdTransfer;
-        if (userId != -1) {
+        Transfer transfer = transferDao.findByTransferId(transferId);
+
+        if (transfer.getStatus().equals("Pending") && userId == transfer.getSenderId()) {
+            transfer.setStatus(status);
             try {
-                transfer.setSenderId(userId);
-
-                createdTransfer = transferDao.create(transfer);
-
-                if (createdTransfer == null) {
+                if (status.equals("Approved") && exchangeMoney(transfer.getSenderId(), transfer.getReceiverId(), transfer.getAmount())) {
+                    transferDao.update(transfer);
+                } else if (status.equals("Rejected")) {
+                    transferDao.update(transfer);
+                } else {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
                 }
             } catch (DaoException exception) {
@@ -77,9 +87,9 @@ public class TransferController {
             }
 
         } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
         }
-        return createdTransfer;
+
     }
 
     @GetMapping
@@ -110,6 +120,14 @@ public class TransferController {
 
 
         return transfer;
+    }
+
+    private boolean exchangeMoney(int senderId, int receiverId, double amount) {
+        if (senderId != 0 && receiverId != 0 && accountDao.withdraw(senderId, amount) > -1) {
+            accountDao.deposit(receiverId, amount);
+            return true;
+        }
+        return false;
     }
 
 }

@@ -9,9 +9,8 @@ public class Transfer {
     private int transferId;
     @NotBlank(message = "Status is required.")
     private String status;
-    private int senderId;
-    @Min(value = 1000, message = "Not a valid recipient.")
-    private int receiverId;
+    private int senderId = 0;
+    private int receiverId = 0;
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero.")
     private double amount;
 

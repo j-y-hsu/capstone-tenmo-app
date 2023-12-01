@@ -35,7 +35,7 @@ CREATE TABLE account (
 
 CREATE TABLE transfer(
 	transfer_id serial NOT NULL PRIMARY KEY, 
-	status varchar(50) DEFAULT('Approved'),
+	status varchar(50) NOT NULL,
 	sender_id int NOT NULL REFERENCES tenmo_user (user_id),
 	receiver_id int NOT NULL REFERENCES tenmo_user (user_id),
 	amount decimal(13, 2) NOT NULL,

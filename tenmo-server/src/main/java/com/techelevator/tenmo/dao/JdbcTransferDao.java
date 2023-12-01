@@ -30,20 +30,17 @@ public class JdbcTransferDao implements TransferDao {
         Integer newTransferId;
 
         try {
-            if (transfer.getSenderId() != transfer.getReceiverId() && accountDao.withdraw(transfer.getSenderId(), transfer.getAmount()) != -1) {
-                accountDao.deposit(transfer.getReceiverId(), transfer.getAmount());
-                newTransferId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getStatus(), transfer.getSenderId(), transfer.getReceiverId(), transfer.getAmount());
-                if (newTransferId != null) {
-                    createdTransfer = transfer;
-                    transfer.setTransferId(newTransferId);
-                }
-
+            newTransferId = jdbcTemplate.queryForObject(sql, Integer.class, transfer.getStatus(), transfer.getSenderId(), transfer.getReceiverId(), transfer.getAmount());
+            if (newTransferId != null) {
+                createdTransfer = transfer;
+                transfer.setTransferId(newTransferId);
             }
         } catch (DataAccessException e) {
             throw new DaoException("Something went wrong");
         }
         return createdTransfer;
     }
+
 
     @Override
     public List<Transfer> findAllByUserId(int userId) {
@@ -82,6 +79,28 @@ public class JdbcTransferDao implements TransferDao {
 
         throw new DaoException("Transfer not found: " + transferId);
     }
+
+    @Override
+    public Transfer update(Transfer transfer) {
+        Transfer updatedTransfer;
+        String sql = "UPDATE transfer\n" +
+                "SET status = ?, sender_id = ?, receiver_id = ?, amount = ? \n" +
+                "WHERE transfer_id = ?;";
+
+        try {
+            int rowsAffected = jdbcTemplate.update(sql, transfer.getStatus(), transfer.getSenderId(), transfer.getReceiverId(), transfer.getAmount(), transfer.getTransferId());
+            if (rowsAffected == 0) {
+                throw new DaoException("Expected 1 row affected but 0 rows were affected");
+            } else {
+                updatedTransfer = findByTransferId(transfer.getTransferId());
+            }
+        } catch (DataAccessException exception) {
+            throw new DaoException("Something went wrong");
+        }
+
+        return updatedTransfer;
+    }
+
 
     private Transfer mapRowToTransfer(SqlRowSet result) {
         Transfer transfer = new Transfer();
